@@ -13,7 +13,7 @@ import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/admin/videos")
+@RequestMapping("/videos")
 public class AdminVideoController {
 
     private final VideoService service;
