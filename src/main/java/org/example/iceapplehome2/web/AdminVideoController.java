@@ -35,4 +35,9 @@ public class AdminVideoController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable String id) { service.delete(id); }
+
+    @PatchMapping("/{id}/current")
+    public AdminVideoResponse makeCurrent(@PathVariable String id) {
+        return service.makeCurrent(id);
+    }
 }

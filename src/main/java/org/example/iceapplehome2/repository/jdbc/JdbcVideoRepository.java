@@ -64,12 +64,14 @@ public class JdbcVideoRepository implements VideoRepository {
 
     @Override
     public int unsetAllCurrent() {
-        return jdbc.update("UPDATE home_video SET is_current = false WHERE is_current = true");
+        String sql = "UPDATE home_video SET is_current = false WHERE is_current = true";
+        return jdbc.update(sql);
     }
 
     @Override
     public int setCurrentById(String id) {
-        return jdbc.update("UPDATE home_video SET is_current = true WHERE id = ?", id);
+        String sql = "UPDATE home_video SET is_current = true WHERE id = ?";
+        return jdbc.update(sql, id);
     }
 
     @Override
