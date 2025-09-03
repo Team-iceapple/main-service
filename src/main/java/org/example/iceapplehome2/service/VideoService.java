@@ -95,4 +95,22 @@ public class VideoService {
         String fileUrl = "/media/" + v.getFilePath(); // 정적 서빙 매핑 경로
         return new AdminVideoResponse(v.getId(), v.getTitle(), v.isCurrent(), v.getFilePath(), fileUrl);
     }
+
+    @Transactional
+    public AdminVideoResponse makeCurrent(String id) {
+        // 1) 존재 확인
+        Video v = repo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
+
+        // 2) 모두 current=false
+        repo.unsetAllCurrent();
+
+        // 3) 대상만 current=true
+        repo.setCurrentById(id);
+
+        // 4) 최종 값 반환
+        Video updated = repo.findById(id)
+                .orElseThrow(() -> new IllegalStateException("갱신된 영상을 찾을 수 없습니다."));
+        return toResp(updated);
+    }
 }
