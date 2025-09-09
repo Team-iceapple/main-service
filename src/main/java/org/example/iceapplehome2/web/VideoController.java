@@ -2,6 +2,7 @@ package org.example.iceapplehome2.web;
 
 import lombok.RequiredArgsConstructor;
 import org.example.iceapplehome2.dto.response.AdminVideoResponse;
+import org.example.iceapplehome2.dto.response.VideoPlaylistItemResponse;
 import org.example.iceapplehome2.service.VideoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,5 +25,10 @@ public class VideoController {
     @GetMapping("/current")
     public AdminVideoResponse current() {
         return service.getCurrent();
+    }
+
+    @GetMapping("/playlist")
+    public List<VideoPlaylistItemResponse> playlist() {
+        return service.getPlaylist();
     }
 }

@@ -1,6 +1,8 @@
 package org.example.iceapplehome2.web;
 
 import lombok.RequiredArgsConstructor;
+import org.example.iceapplehome2.dto.request.AdminVideoEnableRequest;
+import org.example.iceapplehome2.dto.request.AdminVideoMetaUpdateRequest;
 import org.example.iceapplehome2.dto.response.AdminVideoResponse;
 import org.example.iceapplehome2.service.VideoService;
 import org.springframework.http.HttpStatus;
@@ -40,5 +42,17 @@ public class AdminVideoController {
     @PatchMapping("/{id}/current")
     public AdminVideoResponse makeCurrent(@PathVariable String id) {
         return service.makeCurrent(id);
+    }
+
+    @PatchMapping("/{id}/enable")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void enable(@PathVariable String id, @RequestBody AdminVideoEnableRequest req) {
+        service.setEnable(id, req);
+    }
+
+    @PatchMapping("/{id}/meta")
+    public AdminVideoResponse updateMeta(@PathVariable String id,
+                                         @RequestBody AdminVideoMetaUpdateRequest req) {
+        return service.updateMeta(id, req);
     }
 }
