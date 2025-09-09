@@ -14,5 +14,9 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         // /media/<파일명> 요청을 파일시스템 uploadDir로 매핑
         registry.addResourceHandler("/media/**")
                 .addResourceLocations("file:" + uploadDir + "/");
+
+        registry.addResourceHandler("/api/home/media/**")
+                .addResourceLocations("file:" + uploadDir + "/");
     }
+
 }
