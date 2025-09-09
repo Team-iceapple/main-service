@@ -8,6 +8,6 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class AdminVideoCreateRequest {
-    private String url;    // 원본 링크
-    private String title;  // 선택
+    private String url;
+    private String title;
 }

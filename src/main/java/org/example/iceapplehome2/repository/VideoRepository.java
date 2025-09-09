@@ -2,6 +2,7 @@ package org.example.iceapplehome2.repository;
 
 import org.example.iceapplehome2.entity.Video;
 
+import java.time.OffsetDateTime;
 import java.util.*;
 
 public interface VideoRepository {
@@ -13,4 +14,9 @@ public interface VideoRepository {
     int setCurrentById(String id);
     void deleteById(String id);
     Optional<Video> findLatestExcluding(String excludeId);
+
+List<Video> findPlaylist(OffsetDateTime now);
+    void updateEnable(String id, boolean enabled);
+    void updateMeta(String id, String title, Integer weight, Integer durationSec,
+                    OffsetDateTime startsAt, OffsetDateTime endsAt);
 }
