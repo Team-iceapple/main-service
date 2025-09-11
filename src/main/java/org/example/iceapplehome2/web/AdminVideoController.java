@@ -21,7 +21,6 @@ public class AdminVideoController {
 
     private final VideoService service;
 
-    // 업로드 + 등록(현재영상으로 설정)
     @PostMapping(value = "/upload", consumes = MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public AdminVideoResponse upload(@RequestParam("file") MultipartFile file,
