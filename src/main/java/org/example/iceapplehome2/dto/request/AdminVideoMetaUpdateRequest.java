@@ -4,8 +4,8 @@ import java.time.OffsetDateTime;
 
 public record AdminVideoMetaUpdateRequest(
         String title,
-        Integer weight,
-        Integer durationSec,
-        OffsetDateTime startsAt,
-        OffsetDateTime endsAt
+        Integer weight
+//        Integer durationSec,
+//        OffsetDateTime startsAt,
+//        OffsetDateTime endsAt
 ) {}
