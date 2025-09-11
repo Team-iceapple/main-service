@@ -123,7 +123,7 @@ public class VideoService {
                         v.getTitle(),
                         "/media/" + v.getFilePath(),
                         v.getWeight() == null ? 0 : v.getWeight(),
-                        v.getPlaybackRate() == null ? 1.0 : v.getPlaybackRate()   // ✅
+                        v.getPlaybackRate() == null ? 1.0 : v.getPlaybackRate()
                 ))
                 .toList();
     }
@@ -147,7 +147,7 @@ public class VideoService {
     @Transactional
     public AdminVideoResponse updateMeta(String id, AdminVideoMetaUpdateRequest req) {
         repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
-        repo.updateMetaBasic(id, req.title(), req.weight(), req.playbackRate());   // ✅
+        repo.updateMetaBasic(id, req.title(), req.weight(), req.playbackRate());
 
         var updatedAdmin = repo.findAllForAdmin().stream()
                 .filter(v -> id.equals(v.getId()))
@@ -162,7 +162,7 @@ public class VideoService {
     private AdminVideoResponse toAdminResp(Video v) {
         String fileUrl = "/media/" + v.getFilePath();
         int weight = (v.getWeight() == null) ? 0 : v.getWeight();
-        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();   // ✅
+        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
@@ -177,7 +177,7 @@ public class VideoService {
 
     private AdminVideoResponse toAdminResp(Video v, boolean enabled, int weight) {
         String fileUrl = "/media/" + v.getFilePath();
-        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();   // ✅
+        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
