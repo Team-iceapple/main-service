@@ -109,7 +109,6 @@ public class JdbcVideoRepository implements VideoRepository {
         this.jdbc = new JdbcTemplate(dataSource);
     }
 
-    // ----- helpers -----
     private static OffsetDateTime toOdt(Timestamp ts) {
         return ts != null ? ts.toInstant().atOffset(ZoneOffset.UTC) : null;
     }
@@ -122,7 +121,20 @@ public class JdbcVideoRepository implements VideoRepository {
             v.setTitle(rs.getString("title"));
             v.setCurrent(rs.getBoolean("is_current"));
             v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
-            // playlist 필드는 셀렉트에 없으니 기본값(null/false)
+            return v;
+        };
+    }
+
+    private RowMapper<Video> adminRowMapper() {
+        return (rs, rowNum) -> {
+            Video v = new Video();
+            v.setId(rs.getString("id"));
+            v.setFilePath(rs.getString("file_path"));
+            v.setTitle(rs.getString("title"));
+            v.setCurrent(rs.getBoolean("is_current"));
+            v.setEnabled(rs.getBoolean("enabled"));
+            v.setWeight((Integer) rs.getObject("weight"));
+            v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
             return v;
         };
     }
@@ -134,9 +146,10 @@ public class JdbcVideoRepository implements VideoRepository {
             v.setFilePath(rs.getString("file_path"));
             v.setTitle(rs.getString("title"));
             v.setCurrent(rs.getBoolean("is_current"));
-            v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
             v.setEnabled(rs.getBoolean("enabled"));
             v.setWeight((Integer) rs.getObject("weight"));
+            v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
+            // 아래 필드는 현재는 안 쓰지만 스키마에 있으면 매핑해 둠(선택)
             v.setDurationSec((Integer) rs.getObject("duration_sec"));
             v.setStartsAt(toOdt(rs.getTimestamp("starts_at")));
             v.setEndsAt(toOdt(rs.getTimestamp("ends_at")));
@@ -144,7 +157,6 @@ public class JdbcVideoRepository implements VideoRepository {
         };
     }
 
-    // ----- 기존 메서드 -----
 
     @Override
     public List<Video> findAllOrderByCreatedAtDesc() {
@@ -217,39 +229,83 @@ public class JdbcVideoRepository implements VideoRepository {
         return jdbc.query(sql, baseRowMapper(), excludeId).stream().findFirst();
     }
 
-    // ----- 추가: 슬라이드/플레이리스트 -----
-
     @Override
     public List<Video> findPlaylist(OffsetDateTime now) {
-        String sql = """
-            SELECT id, file_path, title, is_current, created_at,
-                   enabled, weight, duration_sec, starts_at, ends_at
-            FROM home_video
-            WHERE enabled = TRUE
-              AND (starts_at IS NULL OR starts_at <= ?)
-              AND (ends_at   IS NULL OR ends_at   >= ?)
-            ORDER BY weight DESC, created_at DESC
-            """;
-        return jdbc.query(sql, playlistRowMapper(), now, now);
+        return List.of();
     }
 
     @Override
     public void updateEnable(String id, boolean enabled) {
-        jdbc.update("UPDATE home_video SET enabled = ? WHERE id = ?", enabled, id);
+
     }
 
     @Override
-    public void updateMeta(String id, String title, Integer weight, Integer durationSec,
-                           OffsetDateTime startsAt, OffsetDateTime endsAt) {
+    public void updateMeta(String id, String title, Integer weight, Integer durationSec, OffsetDateTime startsAt, OffsetDateTime endsAt) {
+
+    }
+
+@Override
+public List<Video> findAllForAdmin() {
+    String sql = """
+            SELECT id, file_path, title, is_current, enabled, weight, created_at
+            FROM home_video
+            ORDER BY is_current DESC, created_at DESC
+            """;
+    return jdbc.query(sql, adminRowMapper());
+}
+
+    @Override
+    public int clearCurrent() {
+        return jdbc.update("UPDATE home_video SET is_current = FALSE WHERE is_current = TRUE");
+    }
+
+    @Override
+    public int makeCurrentAndEnable(String id) {
         String sql = """
-            UPDATE home_video SET
-                title        = COALESCE(?, title),
-                weight       = COALESCE(?, weight),
-                duration_sec = COALESCE(?, duration_sec),
-                starts_at    = COALESCE(?, starts_at),
-                ends_at      = COALESCE(?, ends_at)
+            UPDATE home_video
+            SET is_current = TRUE, enabled = TRUE
             WHERE id = ?
             """;
-        jdbc.update(sql, title, weight, durationSec, startsAt, endsAt, id);
+        return jdbc.update(sql, id);
+    }
+
+
+    @Override
+    public int updateEnabledSafe(String id, boolean enabled) {
+        String sql = """
+            UPDATE home_video
+            SET enabled = ?
+            WHERE id = ?
+              AND (NOT is_current OR ? = TRUE)
+            """;
+        return jdbc.update(sql, enabled, id, enabled);
+    }
+
+    @Override
+    public int deleteNonCurrent(String id) {
+        String sql = "DELETE FROM home_video WHERE id = ? AND is_current = FALSE";
+        return jdbc.update(sql, id);
+    }
+
+    @Override
+    public List<Video> findPlaylist(boolean includeCurrent, Integer limit) {
+        String whereExtra = includeCurrent ? "" : "AND is_current = FALSE";
+        String limitSql   = (limit != null) ? "LIMIT ?" : "";
+
+        String sql = ("""
+            SELECT id, file_path, title, is_current, enabled, weight, created_at,
+                   duration_sec, starts_at, ends_at
+            FROM home_video
+            WHERE enabled = TRUE
+            %s
+            ORDER BY is_current DESC, weight DESC, created_at DESC
+            %s
+            """).formatted(whereExtra, limitSql);
+
+        if (limit != null) {
+            return jdbc.query(sql, playlistRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, playlistRowMapper());
+        }
     }
 }

@@ -6,6 +6,7 @@ import org.example.iceapplehome2.dto.response.VideoPlaylistItemResponse;
 import org.example.iceapplehome2.service.VideoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,10 +18,10 @@ public class VideoController {
 
     private final VideoService service;
 
-    @GetMapping
-    public List<AdminVideoResponse> list() {
-        return service.list();
-    }
+//    @GetMapping
+//    public List<AdminVideoResponse> list() {
+//        return service.list();
+//    }
 
     @GetMapping("/current")
     public AdminVideoResponse current() {
@@ -28,7 +29,10 @@ public class VideoController {
     }
 
     @GetMapping("/playlist")
-    public List<VideoPlaylistItemResponse> playlist() {
-        return service.getPlaylist();
+    public List<VideoPlaylistItemResponse> playlist(
+            @RequestParam(defaultValue = "true") boolean includeCurrent,
+            @RequestParam(required = false) Integer limit
+    ) {
+        return service.getPlaylist(includeCurrent, limit);
     }
 }
