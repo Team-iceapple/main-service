@@ -15,10 +15,13 @@ public interface VideoRepository {
     void deleteById(String id);
     Optional<Video> findLatestExcluding(String excludeId);
 
-    List<Video> findPlaylist(OffsetDateTime now);
+//    List<Video> findPlaylist(OffsetDateTime now);
     void updateEnable(String id, boolean enabled);
-    void updateMeta(String id, String title, Integer weight, Integer durationSec,
-                    OffsetDateTime startsAt, OffsetDateTime endsAt);
+
+    void updateMetaBasic(String id, String title, Integer weight);
+
+//    void updateMeta(String id, String title, Integer weight, Integer durationSec,
+//                    OffsetDateTime startsAt, OffsetDateTime endsAt);
 
     List<Video> findAllForAdmin();
     int clearCurrent();

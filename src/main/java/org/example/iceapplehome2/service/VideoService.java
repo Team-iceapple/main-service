@@ -1,4 +1,3 @@
-
 package org.example.iceapplehome2.service;
 
 import lombok.RequiredArgsConstructor;
@@ -68,7 +67,6 @@ public class VideoService {
             throw new IllegalStateException("파일 저장 실패: " + e.getMessage(), e);
         }
     }
-    // ---
 
     @Transactional(readOnly = true)
     public AdminVideoResponse getCurrent() {
@@ -123,7 +121,6 @@ public class VideoService {
                         v.getId(),
                         v.getTitle(),
                         "/media/" + v.getFilePath(),
-                        v.getDurationSec(),
                         v.getWeight() == null ? 0 : v.getWeight()
                 ))
                 .toList();
@@ -144,6 +141,21 @@ public class VideoService {
                 .orElseThrow();
         return toAdminResp(updatedAdmin);
     }
+
+    @Transactional
+    public AdminVideoResponse updateMeta(String id, AdminVideoMetaUpdateRequest req) {
+        repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
+        repo.updateMetaBasic(id, req.title(), req.weight());
+
+        var updatedAdmin = repo.findAllForAdmin().stream()
+                .filter(v -> id.equals(v.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        return toAdminResp(updatedAdmin);
+    }
+
+    // ---- mapper ----
 
     private AdminVideoResponse toAdminResp(Video v) {
         String fileUrl = "/media/" + v.getFilePath();
@@ -170,18 +182,5 @@ public class VideoService {
                 enabled,
                 weight
         );
-    }
-    @Transactional
-    public AdminVideoResponse updateMeta(String id, AdminVideoMetaUpdateRequest req) {
-        repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
-
-        repo.updateMeta(id, req.title(), req.weight(), req.durationSec(), req.startsAt(), req.endsAt());
-
-        var updatedAdmin = repo.findAllForAdmin().stream()
-                .filter(v -> id.equals(v.getId()))
-                .findFirst()
-                .orElseThrow();
-
-        return toAdminResp(updatedAdmin);
     }
 }
