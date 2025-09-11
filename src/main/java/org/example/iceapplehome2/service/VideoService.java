@@ -114,6 +114,7 @@ public class VideoService {
         return toAdminResp(updatedV, /*enabled*/ true, /*weight*/ 0);
     }
 
+
     @Transactional(readOnly = true)
     public List<VideoPlaylistItemResponse> getPlaylist(boolean includeCurrent, Integer limit) {
         return repo.findPlaylist(includeCurrent, limit).stream()
@@ -121,7 +122,8 @@ public class VideoService {
                         v.getId(),
                         v.getTitle(),
                         "/media/" + v.getFilePath(),
-                        v.getWeight() == null ? 0 : v.getWeight()
+                        v.getWeight() == null ? 0 : v.getWeight(),
+                        v.getPlaybackRate() == null ? 1.0 : v.getPlaybackRate()   // ✅
                 ))
                 .toList();
     }
@@ -145,7 +147,7 @@ public class VideoService {
     @Transactional
     public AdminVideoResponse updateMeta(String id, AdminVideoMetaUpdateRequest req) {
         repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
-        repo.updateMetaBasic(id, req.title(), req.weight());
+        repo.updateMetaBasic(id, req.title(), req.weight(), req.playbackRate());   // ✅
 
         var updatedAdmin = repo.findAllForAdmin().stream()
                 .filter(v -> id.equals(v.getId()))
@@ -160,6 +162,7 @@ public class VideoService {
     private AdminVideoResponse toAdminResp(Video v) {
         String fileUrl = "/media/" + v.getFilePath();
         int weight = (v.getWeight() == null) ? 0 : v.getWeight();
+        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();   // ✅
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
@@ -167,12 +170,14 @@ public class VideoService {
                 v.getFilePath(),
                 fileUrl,
                 v.isEnabled(),
-                weight
+                weight,
+                rate
         );
     }
 
     private AdminVideoResponse toAdminResp(Video v, boolean enabled, int weight) {
         String fileUrl = "/media/" + v.getFilePath();
+        Double rate = (v.getPlaybackRate() == null) ? 1.0 : v.getPlaybackRate();   // ✅
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
@@ -180,7 +185,8 @@ public class VideoService {
                 v.getFilePath(),
                 fileUrl,
                 enabled,
-                weight
+                weight,
+                rate
         );
     }
 }

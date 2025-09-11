@@ -5,5 +5,6 @@ public record VideoPlaylistItemResponse(
         String title,
         String fileUrl,
 //        Integer durationSec,
-        Integer weight
+        Integer weight,
+        Double playbackRate
 ) {}

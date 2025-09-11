@@ -14,4 +14,7 @@ public class AdminVideoResponse {
 
     private boolean enabled;
     private int weight;
+
+    private Double playbackRate;
+
 }
