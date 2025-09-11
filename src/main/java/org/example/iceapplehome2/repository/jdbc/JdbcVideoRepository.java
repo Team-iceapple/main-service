@@ -64,6 +64,49 @@ public class JdbcVideoRepository implements VideoRepository {
             return v;
         };
     }
+    @Override
+    public List<Video> findAllForAdmin() {
+        String sql = """
+            SELECT id, file_path, title, is_current, enabled, weight, playback_rate, created_at
+            FROM home_video
+            ORDER BY is_current DESC, created_at DESC
+            """;
+        return jdbc.query(sql, adminRowMapper());
+    }
+
+    @Override
+    public List<Video> findPlaylist(boolean includeCurrent, Integer limit) {
+        String whereExtra = includeCurrent ? "" : "AND is_current = FALSE";
+        String limitSql   = (limit != null) ? "LIMIT ?" : "";
+
+        String sql = ("""
+            SELECT id, file_path, title, is_current, enabled, weight, playback_rate, created_at
+            FROM home_video
+            WHERE enabled = TRUE
+            %s
+            ORDER BY is_current DESC, weight DESC, created_at DESC
+            %s
+            """).formatted(whereExtra, limitSql);
+
+        if (limit != null) {
+            return jdbc.query(sql, playlistRowMapper(), limit);
+        } else {
+            return jdbc.query(sql, playlistRowMapper());
+        }
+    }
+
+    @Override
+    public void updateMetaBasic(String id, String title, Integer weight, Double playbackRate) {
+        String sql = """
+            UPDATE home_video SET
+                title         = COALESCE(?, title),
+                weight        = COALESCE(?, weight),
+                playback_rate = COALESCE(?, playback_rate)
+            WHERE id = ?
+            """;
+        jdbc.update(sql, title, weight, playbackRate, id);
+    }
+
 
 
     @Override
@@ -143,15 +186,15 @@ public class JdbcVideoRepository implements VideoRepository {
         jdbc.update("UPDATE home_video SET enabled = ? WHERE id = ?", enabled, id);
     }
 
-    @Override
-    public List<Video> findAllForAdmin() {
-        String sql = """
-            SELECT id, file_path, title, is_current, enabled, weight, created_at
-            FROM home_video
-            ORDER BY is_current DESC, created_at DESC
-            """;
-        return jdbc.query(sql, adminRowMapper());
-    }
+//    @Override
+//    public List<Video> findAllForAdmin() {
+//        String sql = """
+//            SELECT id, file_path, title, is_current, enabled, weight, created_at
+//            FROM home_video
+//            ORDER BY is_current DESC, created_at DESC
+//            """;
+//        return jdbc.query(sql, adminRowMapper());
+//    }
 
     @Override
     public int clearCurrent() {
@@ -185,35 +228,35 @@ public class JdbcVideoRepository implements VideoRepository {
         return jdbc.update(sql, id);
     }
 
-    @Override
-    public List<Video> findPlaylist(boolean includeCurrent, Integer limit) {
-        String whereExtra = includeCurrent ? "" : "AND is_current = FALSE";
-        String limitSql   = (limit != null) ? "LIMIT ?" : "";
+//    @Override
+//    public List<Video> findPlaylist(boolean includeCurrent, Integer limit) {
+//        String whereExtra = includeCurrent ? "" : "AND is_current = FALSE";
+//        String limitSql   = (limit != null) ? "LIMIT ?" : "";
+//
+//        String sql = ("""
+//            SELECT id, file_path, title, is_current, enabled, weight, created_at
+//            FROM home_video
+//            WHERE enabled = TRUE
+//            %s
+//            ORDER BY is_current DESC, weight DESC, created_at DESC
+//            %s
+//            """).formatted(whereExtra, limitSql);
+//
+//        if (limit != null) {
+//            return jdbc.query(sql, playlistRowMapper(), limit);
+//        } else {
+//            return jdbc.query(sql, playlistRowMapper());
+//        }
+//    }
 
-        String sql = ("""
-            SELECT id, file_path, title, is_current, enabled, weight, created_at
-            FROM home_video
-            WHERE enabled = TRUE
-            %s
-            ORDER BY is_current DESC, weight DESC, created_at DESC
-            %s
-            """).formatted(whereExtra, limitSql);
-
-        if (limit != null) {
-            return jdbc.query(sql, playlistRowMapper(), limit);
-        } else {
-            return jdbc.query(sql, playlistRowMapper());
-        }
-    }
-
-    @Override
-    public void updateMetaBasic(String id, String title, Integer weight) {
-        String sql = """
-            UPDATE home_video SET
-                title  = COALESCE(?, title),
-                weight = COALESCE(?, weight)
-            WHERE id = ?
-            """;
-        jdbc.update(sql, title, weight, id);
-    }
+//    @Override
+//    public void updateMetaBasic(String id, String title, Integer weight) {
+//        String sql = """
+//            UPDATE home_video SET
+//                title  = COALESCE(?, title),
+//                weight = COALESCE(?, weight)
+//            WHERE id = ?
+//            """;
+//        jdbc.update(sql, title, weight, id);
+//    }
 }

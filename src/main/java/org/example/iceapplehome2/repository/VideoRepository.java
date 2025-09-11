@@ -18,7 +18,7 @@ public interface VideoRepository {
 //    List<Video> findPlaylist(OffsetDateTime now);
     void updateEnable(String id, boolean enabled);
 
-    void updateMetaBasic(String id, String title, Integer weight);
+    void updateMetaBasic(String id, String title, Integer weight, Double playbackRate);
 
 //    void updateMeta(String id, String title, Integer weight, Integer durationSec,
 //                    OffsetDateTime startsAt, OffsetDateTime endsAt);
