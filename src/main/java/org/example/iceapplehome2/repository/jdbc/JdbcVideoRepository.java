@@ -78,17 +78,17 @@ public class JdbcVideoRepository implements VideoRepository {
 
     @Override
     public List<Video> findPlaylist(boolean includeCurrent, Integer limit) {
-        String whereExtra = includeCurrent ? "" : "AND is_current = FALSE";
-        String limitSql   = (limit != null) ? "LIMIT ?" : "";
+        String offsetSql = includeCurrent ? "" : "OFFSET 1";
+        String limitSql  = (limit != null) ? "LIMIT ?" : "";
 
         String sql = ("""
-            SELECT id, file_path, title, is_current, enabled, weight, playback_rate, created_at
-            FROM home_video
-            WHERE enabled = TRUE
-            %s
-            ORDER BY is_current DESC, weight DESC, created_at DESC
-            %s
-            """).formatted(whereExtra, limitSql);
+        SELECT id, file_path, title, is_current, enabled, weight, playback_rate, created_at
+        FROM home_video
+        WHERE enabled = TRUE
+        ORDER BY weight ASC, created_at DESC
+        %s
+        %s
+        """).formatted(limitSql, offsetSql); // LIMIT 먼저, OFFSET 나중
 
         if (limit != null) {
             return jdbc.query(sql, playlistRowMapper(), limit);

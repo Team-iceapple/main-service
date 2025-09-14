@@ -23,10 +23,10 @@ public class VideoController {
 //        return service.list();
 //    }
 
-    @GetMapping("/current")
-    public AdminVideoResponse current() {
-        return service.getCurrent();
-    }
+//    @GetMapping("/current")
+//    public AdminVideoResponse current() {
+//        return service.getCurrent();
+//    }
 
     @GetMapping("/playlist")
     public List<VideoPlaylistItemResponse> playlist(
