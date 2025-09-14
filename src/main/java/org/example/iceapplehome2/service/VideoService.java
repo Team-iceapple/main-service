@@ -71,14 +71,14 @@ public class VideoService {
         }
     }
 
-    @Transactional(readOnly = true)
-    public AdminVideoResponse getCurrent() {
-        var current = repo.findAllForAdmin().stream()
-                .filter(v -> Boolean.TRUE.equals(v.isCurrent()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalStateException("현재 영상이 없습니다."));
-        return toAdminResp(current);
-    }
+//    @Transactional(readOnly = true)
+//    public AdminVideoResponse getCurrent() {
+//        var current = repo.findAllForAdmin().stream()
+//                .filter(v -> Boolean.TRUE.equals(v.isCurrent()))
+//                .findFirst()
+//                .orElseThrow(() -> new IllegalStateException("현재 영상이 없습니다."));
+//        return toAdminResp(current);
+//    }
 
     // 단건 조회 (new)
     @Transactional(readOnly = true)
