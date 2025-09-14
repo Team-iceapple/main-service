@@ -110,7 +110,8 @@ public class VideoService {
         try {
             Path p = Paths.get(uploadDir).resolve(v.getFilePath()).normalize();
             Files.deleteIfExists(p);
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
     }
 
     // 부분 업데이트 (current/enable/meta 통합)
@@ -178,7 +179,6 @@ public class VideoService {
     }
 
 
-
     @Transactional
     public AdminVideoResponse setEnable(String id, AdminVideoEnableRequest req) {
         repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
@@ -217,7 +217,6 @@ public class VideoService {
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
-                Boolean.TRUE.equals(v.isCurrent()),
                 v.getFilePath(),
                 fileUrl,
                 v.isEnabled(),
@@ -232,7 +231,6 @@ public class VideoService {
         return new AdminVideoResponse(
                 v.getId(),
                 v.getTitle(),
-                Boolean.TRUE.equals(v.isCurrent()),
                 v.getFilePath(),
                 fileUrl,
                 enabled,
