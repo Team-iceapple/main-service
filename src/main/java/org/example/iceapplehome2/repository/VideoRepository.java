@@ -12,6 +12,7 @@ public interface VideoRepository {
     String insert(Video video, boolean current);     // filePath, title 저장
     int unsetAllCurrent();
     int setCurrentById(String id);
+    int updateCurrent(String id, boolean current);
     void deleteById(String id);
     Optional<Video> findLatestExcluding(String excludeId);
 

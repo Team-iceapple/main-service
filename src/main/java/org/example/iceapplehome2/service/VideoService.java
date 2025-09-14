@@ -3,14 +3,17 @@ package org.example.iceapplehome2.service;
 import lombok.RequiredArgsConstructor;
 import org.example.iceapplehome2.dto.request.AdminVideoEnableRequest;
 import org.example.iceapplehome2.dto.request.AdminVideoMetaUpdateRequest;
+import org.example.iceapplehome2.dto.request.AdminVideoUpdateRequest;
 import org.example.iceapplehome2.dto.response.AdminVideoResponse;
 import org.example.iceapplehome2.dto.response.VideoPlaylistItemResponse;
 import org.example.iceapplehome2.entity.Video;
 import org.example.iceapplehome2.repository.VideoRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.*;
 import java.nio.file.*;
@@ -77,6 +80,14 @@ public class VideoService {
         return toAdminResp(current);
     }
 
+    // 단건 조회 (new)
+    @Transactional(readOnly = true)
+    public AdminVideoResponse get(String id) {
+        Video v = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 영상입니다."));
+        return toAdminResp(v);
+    }
+
     @Transactional(readOnly = true)
     public List<AdminVideoResponse> list() {
         return repo.findAllForAdmin().stream()
@@ -102,16 +113,42 @@ public class VideoService {
         } catch (Exception ignore) {}
     }
 
+    // 부분 업데이트 (current/enable/meta 통합)
     @Transactional
-    public AdminVideoResponse makeCurrent(String id) {
-        repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
+    public AdminVideoResponse updatePartial(String id, AdminVideoUpdateRequest req) {
+        Video v = repo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 영상입니다."));
 
-        repo.clearCurrent();
-        int updated = repo.makeCurrentAndEnable(id);
-        if (updated != 1) throw new IllegalStateException("대표 지정 실패");
+        if (req.getCurrent() != null) {
+            if (Boolean.TRUE.equals(req.getCurrent())) {
+                repo.clearCurrent();
+                int updated = repo.makeCurrentAndEnable(id);
+                if (updated != 1) {
+                    throw new IllegalStateException("대표 지정 실패");
+                }
+                v.setCurrent(true);
+                v.setEnabled(true);
+            } else {
+                repo.updateCurrent(id, false); // 이 메서드 없으면 추가 필요
+                v.setCurrent(false);
+            }
+        }
 
-        Video updatedV = repo.findById(id).orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
-        return toAdminResp(updatedV, /*enabled*/ true, /*weight*/ 0);
+        if (req.getEnabled() != null) {
+            if (Boolean.FALSE.equals(req.getEnabled()) && (v.isCurrent() || Boolean.TRUE.equals(req.getCurrent()))) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "대표 영상은 비활성화할 수 없습니다.");
+            }
+            repo.updateEnabledSafe(id, req.getEnabled());
+            v.setEnabled(req.getEnabled());
+        }
+
+        if (req.getTitle() != null || req.getWeight() != null || req.getPlaybackRate() != null) {
+            repo.updateMetaBasic(id, req.getTitle(), req.getWeight(), req.getPlaybackRate());
+        }
+
+        Video updated = repo.findById(id)
+                .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
+        return toAdminResp(updated);
     }
 
 
@@ -127,6 +164,20 @@ public class VideoService {
                 ))
                 .toList();
     }
+
+    @Transactional
+    public AdminVideoResponse makeCurrent(String id) {
+        repo.findById(id).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 영상입니다."));
+
+        repo.clearCurrent();
+        int updated = repo.makeCurrentAndEnable(id);
+        if (updated != 1) throw new IllegalStateException("대표 지정 실패");
+
+        Video updatedV = repo.findById(id).orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
+        return toAdminResp(updatedV, /*enabled*/ true, /*weight*/ 0);
+    }
+
+
 
     @Transactional
     public AdminVideoResponse setEnable(String id, AdminVideoEnableRequest req) {
