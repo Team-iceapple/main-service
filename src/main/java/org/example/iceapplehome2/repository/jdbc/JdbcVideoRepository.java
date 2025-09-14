@@ -46,6 +46,7 @@ public class JdbcVideoRepository implements VideoRepository {
             v.setCurrent(rs.getBoolean("is_current"));
             v.setEnabled(rs.getBoolean("enabled"));
             v.setWeight((Integer) rs.getObject("weight"));
+            v.setPlaybackRate((Double) rs.getObject("playback_rate"));
             v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
             return v;
         };
@@ -60,6 +61,7 @@ public class JdbcVideoRepository implements VideoRepository {
             v.setCurrent(rs.getBoolean("is_current"));
             v.setEnabled(rs.getBoolean("enabled"));
             v.setWeight((Integer) rs.getObject("weight"));
+            v.setPlaybackRate((Double) rs.getObject("playback_rate"));
             v.setCreatedAt(toOdt(rs.getTimestamp("created_at")));
             return v;
         };
@@ -133,11 +135,11 @@ public class JdbcVideoRepository implements VideoRepository {
     @Override
     public Optional<Video> findById(String id) {
         String sql = """
-            SELECT id, file_path, title, is_current, created_at
-            FROM home_video
-            WHERE id = ?
-            """;
-        return jdbc.query(sql, baseRowMapper(), id).stream().findFirst();
+        SELECT id, file_path, title, is_current, enabled, weight, playback_rate, created_at
+        FROM home_video
+        WHERE id = ?
+        """;
+        return jdbc.query(sql, adminRowMapper(), id).stream().findFirst();
     }
 
     @Override
@@ -161,6 +163,12 @@ public class JdbcVideoRepository implements VideoRepository {
     public int setCurrentById(String id) {
         String sql = "UPDATE home_video SET is_current = TRUE WHERE id = ?";
         return jdbc.update(sql, id);
+    }
+
+    @Override
+    public int updateCurrent(String id, boolean current) {
+        String sql = "UPDATE home_video SET is_current = ? WHERE id = ?";
+        return jdbc.update(sql, current, id);
     }
 
     @Override
