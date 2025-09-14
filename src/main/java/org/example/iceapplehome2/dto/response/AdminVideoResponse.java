@@ -8,7 +8,7 @@ import lombok.Getter;
 public class AdminVideoResponse {
     private String id;
     private String title;
-    private boolean current;
+//    private boolean current;
     private String filePath;
     private String fileUrl;
 
