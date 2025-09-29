@@ -31,5 +31,5 @@ public interface VideoRepository {
     int deleteNonCurrent(String id);
     List<Video> findPlaylist(boolean includeCurrent, Integer limit);
 
-
+    void shiftAndSet(String id, int newWeight);
 }
