@@ -526,20 +526,31 @@ public class JdbcVideoRepository implements VideoRepository {
     }
     @Transactional
     public void shiftAndSet(String id, int newWeight) {
-        // newWeight 이상을 뒤로 밀고
+        final int BUMP = 1_000_000; // 충분히 큰 값
+
+        // 1) newWeight 이상인 활성들을 크게 띄우기
         jdbc.update("""
         UPDATE home_video
-        SET weight = weight + 1
+        SET weight = weight + ?
         WHERE enabled = TRUE
           AND id <> ?
           AND weight >= ?
-    """, id, newWeight);
+    """, BUMP, id, newWeight);
 
-        // 대상은 활성화 + 지정 위치 배치
+        // 2) 대상 영상 자리 배치(활성화 포함)
         jdbc.update("""
         UPDATE home_video
         SET enabled = TRUE, weight = ?
         WHERE id = ?
     """, newWeight, id);
+
+        // 3) 띄워둔 애들 한 칸 내려놓기 (결과적으로 +1 효과)
+        jdbc.update("""
+        UPDATE home_video
+        SET weight = weight - (? - 1)  -- BUMP-1 만큼 감소 => (원래 weight)+1
+        WHERE enabled = TRUE
+          AND id <> ?
+          AND weight >= ? + ?
+    """, BUMP, id, newWeight, BUMP);
     }
 }
