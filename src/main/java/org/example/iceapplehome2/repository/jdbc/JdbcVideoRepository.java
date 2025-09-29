@@ -524,4 +524,22 @@ public class JdbcVideoRepository implements VideoRepository {
               AND h.weight <> o.new_w
             """);
     }
+    @Transactional
+    public void shiftAndSet(String id, int newWeight) {
+        // newWeight 이상을 뒤로 밀고
+        jdbc.update("""
+        UPDATE home_video
+        SET weight = weight + 1
+        WHERE enabled = TRUE
+          AND id <> ?
+          AND weight >= ?
+    """, id, newWeight);
+
+        // 대상은 활성화 + 지정 위치 배치
+        jdbc.update("""
+        UPDATE home_video
+        SET enabled = TRUE, weight = ?
+        WHERE id = ?
+    """, newWeight, id);
+    }
 }
