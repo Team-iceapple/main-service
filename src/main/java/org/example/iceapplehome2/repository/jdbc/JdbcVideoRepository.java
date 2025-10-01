@@ -553,4 +553,43 @@ public class JdbcVideoRepository implements VideoRepository {
           AND weight >= ? + ?
     """, BUMP, id, newWeight, BUMP);
     }
+
+    // --- makeFirst 전용: 활성 weight 전체 +1 (대상 제외)
+    @Override
+    public int bumpAllEnabledWeightsExcept(String id) {
+        final String sql = """
+        UPDATE home_video
+           SET weight = weight + 1
+         WHERE enabled = TRUE
+           AND id <> ?
+        """;
+        return jdbc.update(sql, id);
+    }
+
+    // --- makeFirst 전용: 대상 영상 활성화 + weight=0
+    @Override
+    public int forceEnableAndSetZero(String id) {
+        final String sql = """
+        UPDATE home_video
+           SET enabled = TRUE,
+               weight  = 0
+         WHERE id = ?
+        """;
+        return jdbc.update(sql, id);
+    }
+
+    // --- COALESCE 기반 부분 업데이트(title/enabled/weight/playback_rate)
+    @Override
+    public int patchCoalesce(String id, String title, Boolean enabled, Integer weight, Double playbackRate) {
+        final String sql = """
+        UPDATE home_video
+           SET title         = COALESCE(?, title),
+               enabled       = COALESCE(?, enabled),
+               weight        = COALESCE(?, weight),
+               playback_rate = COALESCE(?, playback_rate)
+         WHERE id = ?
+        """;
+        return jdbc.update(sql, title, enabled, weight, playbackRate, id);
+    }
+
 }

@@ -32,4 +32,11 @@ public interface VideoRepository {
     List<Video> findPlaylist(boolean includeCurrent, Integer limit);
 
     void shiftAndSet(String id, int newWeight);
+
+    // makeFirst
+    int bumpAllEnabledWeightsExcept(String id);
+    int forceEnableAndSetZero(String id);
+    int patchCoalesce(String id, String title, Boolean enabled, Integer weight, Double playbackRate);
+
+
 }

@@ -337,23 +337,36 @@ public class VideoService {
         } catch (Exception ignore) { }
     }
 
-    /** 부분 업데이트: 선택 필드만 반영 (COALESCE), 정렬/활성은 안전 분기 */
+    /** 부분 업데이트: 선택 필드만 반영 (COALESCE), makeFirst 지원 */
     @Transactional
     public AdminVideoResponse updatePartial(String id, AdminVideoUpdateRequest req) {
-        repo.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 영상입니다."));
+        // 존재 확인
+        repo.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 영상입니다."));
 
-        // 1) enabled=false → 비활성 + compact (repo가 수행)
+        // 0) 맨 앞으로 보내기 (makeFirst=true)
+        // - enabled/weight는 무시하고 자동으로 enabled=true, weight=0
+        // - title / playbackRate 는 함께 반영
+        if (Boolean.TRUE.equals(req.getMakeFirst())) {
+            repo.bumpAllEnabledWeightsExcept(id);                // 모든 활성 weight +1 (대상 제외)
+            repo.forceEnableAndSetZero(id);                      // 대상 활성화 + weight=0
+            repo.patchCoalesce(id, req.getTitle(), null, null,   // 나머지 필드만 COALESCE
+                    req.getPlaybackRate());
+            return repo.findById(id).map(this::toAdminResp)
+                    .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
+        }
+
+        // 1) enabled=false → 비활성 + compact, 이후 메타만 반영
         if (Boolean.FALSE.equals(req.getEnabled())) {
             repo.updateEnable(id, false);
-            // 메타만 있으면 이어서 반영
             repo.updateMetaBasic(id, req.getTitle(), null, req.getPlaybackRate());
             return repo.findById(id).map(this::toAdminResp)
                     .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
         }
 
-        // 2) enabled=true + weight 지정 → 끼워넣기(shift) 후 메타만 반영
+        // 2) enabled=true + weight 지정 → 해당 위치로 끼워넣기(shift) 후 메타만 반영
         if (Boolean.TRUE.equals(req.getEnabled()) && req.getWeight() != null) {
-            repo.shiftAndSet(id, req.getWeight());   // 인터페이스/구현에 추가 필요(아래 안내)
+            repo.shiftAndSet(id, req.getWeight());
             repo.updateMetaBasic(id, req.getTitle(), null, req.getPlaybackRate());
             return repo.findById(id).map(this::toAdminResp)
                     .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
@@ -361,17 +374,18 @@ public class VideoService {
 
         // 3) enabled=true (weight 미지정) → 꼬리(next)로 활성화 후 메타
         if (Boolean.TRUE.equals(req.getEnabled())) {
-            repo.updateEnable(id, true);              // repo가 next로 배치
+            repo.updateEnable(id, true);
             repo.updateMetaBasic(id, req.getTitle(), null, req.getPlaybackRate());
             return repo.findById(id).map(this::toAdminResp)
                     .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
         }
 
-        // 4) enabled null → 메타만 COALESCE (weight도 허용: 충돌은 DB unique가 막음)
+        // 4) enabled null → 메타만 COALESCE (weight 단독 변경도 허용; 중복은 DB unique가 막음)
         repo.updateMetaBasic(id, req.getTitle(), req.getWeight(), req.getPlaybackRate());
         return repo.findById(id).map(this::toAdminResp)
                 .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
     }
+
 
     @Transactional(readOnly = true)
     public List<VideoPlaylistItemResponse> getPlaylist(boolean includeCurrent, Integer limit) {

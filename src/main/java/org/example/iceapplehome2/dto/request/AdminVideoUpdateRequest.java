@@ -15,5 +15,7 @@ public class AdminVideoUpdateRequest {
     private Boolean enabled;      // 재생목록 포함/제외
     private Integer weight;       // 정렬 우선순위
     private Double playbackRate;  // 재생 속도
+    private Boolean makeFirst;
+
 
 }
