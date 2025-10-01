@@ -344,17 +344,20 @@ public class VideoService {
         repo.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "존재하지 않는 영상입니다."));
 
-        // 0) 맨 앞으로 보내기 (makeFirst=true)
-        // - enabled/weight는 무시하고 자동으로 enabled=true, weight=0
-        // - title / playbackRate 는 함께 반영
+// 0) 맨 앞으로 보내기 (makeFirst=true)
+// - enabled/weight는 무시하고 자동 enabled=true, weight=0
+// - title / playbackRate 는 함께 반영
         if (Boolean.TRUE.equals(req.getMakeFirst())) {
-            repo.bumpAllEnabledWeightsExcept(id);                // 모든 활성 weight +1 (대상 제외)
-            repo.forceEnableAndSetZero(id);                      // 대상 활성화 + weight=0
-            repo.patchCoalesce(id, req.getTitle(), null, null,   // 나머지 필드만 COALESCE
-                    req.getPlaybackRate());
+            // 유니크 충돌 없는 안전한 끼워넣기
+            repo.shiftAndSet(id, 0);
+
+            // 나머지 필드만 COALESCE(title, playbackRate)
+            repo.patchCoalesce(id, req.getTitle(), null, null, req.getPlaybackRate());
+
             return repo.findById(id).map(this::toAdminResp)
                     .orElseThrow(() -> new IllegalStateException("갱신 조회 실패"));
         }
+
 
         // 1) enabled=false → 비활성 + compact, 이후 메타만 반영
         if (Boolean.FALSE.equals(req.getEnabled())) {
